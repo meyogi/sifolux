@@ -1,0 +1,36 @@
+with "gtkada2";
+
+project Sifolux is
+
+   for Object_Dir use "build";
+   for Source_Dirs use ("src");
+   for Source_Files use ("download_manager.adb", "download_manager.ads", "main_window_pkg-callbacks.adb", "main_window_pkg-callbacks.ads", "main_window_pkg.adb", "main_window_pkg.ads", "my_intl.adb", "my_intl.ads", 
+"properties_window_pkg.adb", "properties_window_pkg.ads", "downloaders.adb", "downloaders.ads", "utils.ads", "utils.adb", "config.ads", "config.adb", "safe_file.ads", "safe_file.adb", "protocols-mms.adb", "protocols-mms.ads", "protocols.ads", 
+"top_protocols.ads", "top_protocols.adb", "top_protocols-mms.ads", "top_protocols-mms.adb", "sifolux.adb");
+   for Main use ("sifolux.adb");
+   for Languages use ("Ada");
+
+   package Compiler is
+      for Default_Switches ("ada") use ("-gnatf", "-gnato", "-g");
+   end Compiler;
+
+   package Linker is
+      for Default_Switches ("ada") use ("-lmms", "-lgtkada2");
+   end Linker;
+
+   package Builder is
+      for Default_Switches ("ada") use ("-s");
+   end Builder;
+
+   package Pretty_Printer is
+   end Pretty_Printer;
+
+   package Binder is
+   end Binder;
+
+   package Ide is
+      for Debugger_Command use "gdb";
+   end Ide;
+
+end Sifolux;
+
