@@ -1,0 +1,56 @@
+= Sifolux =
+
+Sifolux is a program that allows you to download streams and schedule the downloads easily.
+If a stream stops for some reason, 
+the download will continue when the stream is available again
+
+
+Downloading
+----------
+The prebuilt version can be found here:
+http://cloud.github.com/downloads/meyogi/sifolux/sifolux_0_0_1.tar.gz
+
+
+Required packages
+-----------------
+For using the prebuilt version, the following packages need to be installed:
+libmms0
+libgtkada-2.8
+
+For building from the source:
+gnat-4.3
+libmms-dev
+libgtkada2-dev
+
+
+Building from source
+--------------------
+cd to the directory where the file "sifolux.gpr" is located, and then:
+gprmake -Psifolux
+this will create a the executable binary called "sifolux" under the "build" directory.
+
+
+Installing
+----------
+After installing the required packages listed above, just put the binary file "sifolux" wherever you like.
+
+Usage
+-----
+Run the application from the command line:
+[~]$ /path/to/binary/file/sifolux
+
+The download streams are saved under ~/sifolux_downloads
+The exact location is based on the name of the download and the time the download started.
+For example, if a download is scheduled to begin at 23/7/2010 and its name is "my_favorite_program", 
+then the location of the downloaded files could be something like: 
+~/sifolux_downloads/my_favorite_program/20100723_2/
+
+Files that were downloaded from a Live stream are not seekable.
+Downloading of a Prerecorded stream (non Live stream) is, currently, unsupported. 
+It is possible to download such a stream, but the downloaded file might not be complete.
+
+The only supported protocol right now is MMS.
+
+
+
+
