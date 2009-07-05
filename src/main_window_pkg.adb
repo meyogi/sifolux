@@ -63,7 +63,6 @@ package body Main_Window_Pkg is
       Box2            : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
       Box3            : Gtk.Box.Gtk_Box;
       Scroller        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-      Button          : Gtk.Button.Gtk_Button;
       Changes_Map     : Download_Manager.Download_Summary_Maps.Map;
       Timeout_Handler : Glib.Main.G_Source_Id;
       Row             : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
@@ -155,11 +154,11 @@ package body Main_Window_Pkg is
       Gtk.Button.Set_Sensitive (Win.Properties_Button, False);
       Gtk.Hbutton_Box.Pack_Start(Box2, Win.Properties_Button, False, False);
       Gtk_New_Hbox( Box3);
-      Gtk.Button.Gtk_New_From_Stock( Button, Gtk.Stock.Stock_Delete );
-      Gtk.Button.Set_Sensitive (Button, False);
+      Gtk.Button.Gtk_New_From_Stock( Win.Delete_Button, Gtk.Stock.Stock_Delete );
+      Gtk.Button.Set_Sensitive (Win.Delete_Button, False);
 
       Gtk.Hbutton_Box.Set_Layout (Box2, Gtk.Enums.Buttonbox_Start);
-      Gtk.Hbutton_Box.Pack_End(Box2, Button, True, False);
+      Gtk.Hbutton_Box.Pack_End(Box2, Win.Delete_Button, True, False);
       Pack_Start(Box1, Box2, False, False);
 
       Add (Win, Box1);
@@ -201,6 +200,13 @@ package body Main_Window_Pkg is
          "clicked",
          Main_Window_Callback.To_Marshaller (On_Stop_Button_Pressed'Access),
          Slot_Object => Win);
+
+      Main_Window_Callback.Object_Connect
+        (Win.Delete_Button,
+         "clicked",
+         Main_Window_Callback.To_Marshaller (On_Delete_Button_Pressed'Access),
+         Slot_Object => Win);
+
 
       Selection_Callback.Connect
         (Get_Selection (Win.Table_View), "changed",

@@ -58,13 +58,21 @@ package Download_Manager is
 
    procedure Modify(Id : in Download_Id; D : in Download);
    procedure Add(D : in Download);
+   procedure Delete(Id : in Download_Id);
+   -- Deletes the download which is designated by Id from the list of downloads.
+   -- The downloaded files are not deleted from the disk.
+   -- If Id is does not designate a download, nothing happens.
+
    procedure Pause(Id : in Download_Id);
    procedure Stop(Id : in Download_Id);
    procedure Start(Id : in Download_Id);
    procedure Run;
    procedure Quit;
 
-   function  Get(Id : in Download_Id) return Download;
+   function Get(Id : in Download_Id) return Download;
+   function Exists(Id : in Download_Id) return Boolean;
+   -- Returns True if Id designates an element, and returns False otherwise.
+
    procedure Init(New_Download : out Download);
    procedure Init_Like(New_Download : out Download; Old_Download : in Download);
    function Get_Name(D : in Download) return String ;
@@ -83,6 +91,8 @@ package Download_Manager is
    function Get_State(D : in Download) return State;
    function Is_New(D : in Download) return Boolean;
    function Is_Duration_Modifiable(D : in Download) return Boolean;
+   function Is_Deletable(D : in Download) return Boolean;
+   -- Returns True if D can be deleted, and returns False otherwise.
 
    function Is_Url_Valid(Address : in String) return Boolean;
    function Is_Protocol_Supported(Address : in String) return Boolean;

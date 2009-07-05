@@ -30,6 +30,65 @@ package body Main_Window_Pkg.Callbacks is
      (Element_Type => Download_Manager.Download_Id,
       Index_Type   => Positive);
 
+   --------------------
+   -- Update_Buttons --
+   --------------------
+
+   procedure Update_Buttons(Win : in Main_Window_Type) is
+      use Gtk.Tree_Model;
+      use Download_Manager;
+
+      Tree                      : Gtk.Tree_Model.Gtk_Tree_Model;
+      Id                        : Download_Manager.Download_Id;
+      Selected_Made             : Boolean;
+      The_State                 : Download_Manager.State;
+      D                         : Download_Manager.Download;
+      Row                       : Gtk_Tree_Iter := Null_Iter;
+      Record_Button_Enabled     : Boolean       := False;
+      Properties_Button_Enabled : Boolean       := False;
+      Pause_Button_Enabled      : Boolean       := False;
+      Stop_Button_Enabled       : Boolean       := False;
+      Delete_Button_Enabled     : Boolean       := False;
+   begin
+      Gtk.Tree_Selection.Get_Selected(Gtk.Tree_View.Get_Selection(Win.Table_View), Tree, Row);
+      Selected_Made := Row /= Null_Iter;
+      if Selected_Made then
+         Id        := Download_Manager.Download_Id(Gtk.List_Store.Get_Int(Win.Table, Row, 0));
+         D         := Download_Manager.Get(Id);
+         The_State :=   Download_Manager.Get_State(D);
+      end if;
+
+      Record_Button_Enabled := Selected_Made and then
+        (The_State = Sleeping
+         or
+           The_State = Paused
+         or
+           The_State = Stopped
+         or
+           The_State = Finished
+         or
+           The_State = Missed
+        );
+
+      Pause_Button_Enabled := Selected_Made and then
+        (The_State = Waiting or The_State = Downloading) ;
+
+      Stop_Button_Enabled := Selected_Made
+        and then Download_Manager.Is_Live(D)
+        and then (The_State = Waiting or The_State = Downloading or The_State = Paused) ;
+
+      Delete_Button_Enabled := Selected_Made
+        and then Download_Manager.Is_Deletable(D);
+
+      Properties_Button_Enabled := Selected_Made;
+      Gtk.Button.Set_Sensitive (Win.Record_Button, Record_Button_Enabled);
+      Gtk.Button.Set_Sensitive (Win.Pause_Button, Pause_Button_Enabled);
+      Gtk.Button.Set_Sensitive (Win.Stop_Button, Stop_Button_Enabled);
+      Gtk.Button.Set_Sensitive (Win.Properties_Button, Properties_Button_Enabled);
+      Gtk.Button.Set_Sensitive (Win.Delete_Button, Delete_Button_Enabled);
+
+   end Update_Buttons;
+
    ----------------------------
    -- On_Main_Window_Delete  --
    ----------------------------
@@ -91,6 +150,29 @@ package body Main_Window_Pkg.Callbacks is
          Properties_Window_Pkg.Show_All( Properties_Window_Pkg.Prop_Win );
       end if;
    end On_Properties_Button_Pressed;
+
+   ------------------------------
+   -- On_Delete_Button_Pressed --
+   ------------------------------
+
+   procedure On_Delete_Button_Pressed (Win : access Main_Window_Record'Class) is
+      use type Gtk.Tree_Model.Gtk_Tree_Iter;
+
+      Downloads_Table : Gtk.List_Store.Gtk_List_Store renames Win.Table;
+      Tree            : Gtk.Tree_Model.Gtk_Tree_Model;
+      Id              : Download_Manager.Download_Id;
+      Row             : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
+   begin
+      Gtk.Tree_Selection.Get_Selected(Gtk.Tree_View.Get_Selection(Win.Table_View), Tree, Row);
+      if (Row /= Gtk.Tree_Model.Null_Iter) then
+         Id := Download_Manager.Download_Id(Gtk.List_Store.Get_Int(Win.Table, Row, 0));
+         Download_Manager.Delete(Id);
+         if not Download_Manager.Exists(Id) then
+            Gtk.List_Store.Remove(Downloads_Table, Row);
+            Update_Tables(Main_Window);
+         end if;
+      end if;
+   end On_Delete_Button_Pressed;
 
    ------------------------------
    -- On_Record_Button_Pressed --
@@ -160,59 +242,6 @@ package body Main_Window_Pkg.Callbacks is
          Download_Manager.Stop(Id);
       end if;
    end On_Stop_Button_Pressed;
-
-   --------------------
-   -- Update_Buttons --
-   --------------------
-
-   procedure Update_Buttons(Win : in Main_Window_Type) is
-      use Gtk.Tree_Model;
-      use Download_Manager;
-
-      Tree                      : Gtk.Tree_Model.Gtk_Tree_Model;
-      Id                        : Download_Manager.Download_Id;
-      Selected_Made             : Boolean;
-      The_State                 : Download_Manager.State;
-      D                         : Download_Manager.Download;
-      Row                       : Gtk_Tree_Iter := Null_Iter;
-      Record_Button_Enabled     : Boolean       := False;
-      Properties_Button_Enabled : Boolean       := False;
-      Pause_Button_Enabled      : Boolean       := False;
-      Stop_Button_Enabled       : Boolean       := False;
-   begin
-      Gtk.Tree_Selection.Get_Selected(Gtk.Tree_View.Get_Selection(Win.Table_View), Tree, Row);
-      Selected_Made := Row /= Null_Iter;
-      if Selected_Made then
-         Id        := Download_Manager.Download_Id(Gtk.List_Store.Get_Int(Win.Table, Row, 0));
-         D         := Download_Manager.Get(Id);
-         The_State :=   Download_Manager.Get_State(D);
-      end if;
-
-      Record_Button_Enabled := Selected_Made and then
-        (The_State = Sleeping
-         or
-           The_State = Paused
-         or
-           The_State = Stopped
-         or
-           The_State = Finished
-         or
-           The_State = Missed
-        );
-
-      Pause_Button_Enabled := Selected_Made and then
-        (The_State = Waiting or The_State = Downloading) ;
-
-      Stop_Button_Enabled := Selected_Made
-        and then Download_Manager.Is_Live(D)
-        and then (The_State = Waiting or The_State = Downloading or The_State = Paused) ;
-
-      Properties_Button_Enabled := Selected_Made;
-      Gtk.Button.Set_Sensitive (Win.Record_Button, Record_Button_Enabled);
-      Gtk.Button.Set_Sensitive (Win.Pause_Button, Pause_Button_Enabled);
-      Gtk.Button.Set_Sensitive (Win.Stop_Button, Stop_Button_Enabled);
-      Gtk.Button.Set_Sensitive (Win.Properties_Button, Properties_Button_Enabled);
-   end Update_Buttons;
 
    -----------------------
    -- On_Table_Selected --

@@ -76,6 +76,18 @@ package body Download_Manager is
       return Is_Vital(D) and then (D.Is_Live or D.The_State = Sleeping);
    end Is_Duration_Modifiable;
 
+   ------------------
+   -- Is_Deletable --
+   ------------------
+
+   function Is_Deletable(D : in Download) return Boolean is
+   begin
+      return D.The_State = Sleeping
+        or D.The_State = Stopped
+        or D.The_State = Finished
+        or D.The_State = Failed;
+   end Is_Deletable;
+
    ----------------
    -- Is_Same_Id --
    ----------------
@@ -107,11 +119,12 @@ package body Download_Manager is
      new Download_Lists.Generic_Sorting("<" => Smaller) ;
 
 
-   Single_Day     : constant Ada.Calendar.Day_Duration := Ada.Calendar.Day_Duration'Last;
-   Single_Week    : constant Duration                  := Single_Day * 7;
-   Info_Extension : constant String                    := "txt";
-   Next_Id        : Download_Id                        := Download_Id'First;
-   Download_List  : Download_Lists.List;
+   Single_Day        : constant Ada.Calendar.Day_Duration := Ada.Calendar.Day_Duration'Last;
+   Single_Week       : constant Duration                  := Single_Day * 7;
+   Info_Extension    : constant String                    := "txt";
+   Deleted_Info_Mark : constant String                    := "del";
+   Next_Id           : Download_Id                        := Download_Id'First;
+   Download_List     : Download_Lists.List;
 
 
    protected Last_Changes is
@@ -246,6 +259,25 @@ package body Download_Manager is
 
    end Load;
 
+   -----------------
+   -- Delete_Info --
+   -----------------
+   -- changes the Info file name so that the file will be ignored.
+
+   procedure Delete_Info(D : in Download) is
+      use Ada.Directories;
+      Original_Full_Name : String := Info_Full_Name(D);
+      Deleted_Full_Name  : String :=
+        Compose(Containing_Directory(Original_Full_Name),
+                Base_Name(Original_Full_Name) & "." & Deleted_Info_Mark,
+                Extension(Original_Full_Name));
+
+   begin
+      if Exists(Original_Full_Name) then
+         Rename(Original_Full_Name, Deleted_Full_Name);
+      end if;
+   end Delete_Info;
+
    --------------
    -- Load_All --
    --------------
@@ -279,7 +311,8 @@ package body Download_Manager is
             Next_Id := Id + 1;
          end if;
 
-         if Ada.Strings.Fixed.Index(Ada.Directories.Simple_Name(Directory_Entry), "del") = 0 then
+         if Ada.Strings.Fixed.Index(Ada.Directories.Simple_Name(Directory_Entry),
+                                    Deleted_Info_Mark) = 0 then
             begin
                Text_IO.Open(File, Text_IO.In_File, Ada.Directories.Full_Name(Directory_Entry));
                Init(D);
@@ -531,14 +564,16 @@ package body Download_Manager is
 
    end Stop_Downloading;
 
-   --------------
+   -----------------
    -- task Worker --
-   --------------
+   -----------------
 
    task Worker is
       entry Get_Download(Id : in Download_Id; D : out Download);
+      entry Exists(Id : in Download_Id; Result: out Boolean);
       entry Modify(Id : in Download_Id; D : in Download);
       entry Add(D : in Download);
+      entry Delete(Id : in Download_Id);
       entry Pause(Id : in Download_Id);
       entry Stop(Id : in Download_Id);
       entry Start(Id : in Download_Id);
@@ -739,6 +774,10 @@ package body Download_Manager is
                D := Download_Lists.Element(Get_Cursor(Id));
             end Get_Download;
          or
+            accept Exists(Id : in Download_Id; Result: out Boolean) do
+               Result := Download_Lists.Has_Element(Get_Cursor(Id));
+            end Exists;
+         or
             accept Modify(Id : in Download_Id; D : in Download) do
                Position := Get_Cursor(Id);
                D1 :=  Download_Lists.Element( Position);
@@ -789,6 +828,19 @@ package body Download_Manager is
                Last_Changes.Set(Current_Summaries);
                Next_Action_Time := Now;
             end Add;
+         or
+            accept Delete(Id : in Download_Id) do
+               Position := Get_Cursor(Id);
+               if Download_Lists.Has_Element(Position) then
+                  D1 :=  Download_Lists.Element( Position);
+                  if Is_Deletable(D1) then
+                     Download_Summary_Maps.Exclude(Current_Summaries, D1.Id);
+                     Last_Changes.Set(Current_Summaries);
+                     Download_Lists.Delete(Download_List, Position);
+                     Delete_Info(D1);
+                  end if;
+               end if;
+            end Delete;
          or
             accept Pause(Id : in Download_Id) do
                Position := Get_Cursor(Id);
@@ -872,6 +924,17 @@ package body Download_Manager is
       return D;
    end Get;
 
+   ------------
+   -- Exists --
+   ------------
+
+   function Exists(Id : in Download_Id) return Boolean is
+      Ret_Val : Boolean;
+   begin
+      Worker.Exists(Id, Ret_Val);
+      return Ret_Val;
+   end Exists;
+
    ----------
    -- Init --
    ----------
@@ -923,6 +986,15 @@ package body Download_Manager is
    begin
       Worker.Add(D);
    end Add;
+
+   ------------
+   -- Delete --
+   ------------
+
+   procedure Delete(Id : in Download_Id) is
+   begin
+      Worker.Delete(Id);
+   end Delete;
 
    -----------
    -- Pause --

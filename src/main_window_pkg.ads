@@ -32,6 +32,7 @@ package Main_Window_Pkg is
          Record_Button     : Gtk.Button.Gtk_Button;
          Pause_Button      : Gtk.Button.Gtk_Button;
          Stop_Button       : Gtk.Button.Gtk_Button;
+         Delete_Button     : Gtk.Button.Gtk_Button;
          Properties_Button : Gtk.Button.Gtk_Button;
          New_Button        : Gtk.Button.Gtk_Button;
       end record;

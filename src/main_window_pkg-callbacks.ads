@@ -41,6 +41,7 @@ package Main_Window_Pkg.Callbacks is
    procedure On_Record_Button_Pressed (Win : access Main_Window_Record'Class);
    procedure On_Pause_Button_Pressed (Win : access Main_Window_Record'Class);
    procedure On_Stop_Button_Pressed (Win : access Main_Window_Record'Class);
+   procedure On_Delete_Button_Pressed (Win : access Main_Window_Record'Class);
    procedure On_Table_Selected
      (Selection : access Gtk.Tree_Selection.Gtk_Tree_Selection_Record'Class;  Win : in Main_Window_Type);
    procedure Update_Tables(Win : in Main_Window_Type);
